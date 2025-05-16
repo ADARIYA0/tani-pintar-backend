@@ -52,51 +52,27 @@ exports.register = async (req, res) => {
 
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { username, password } = req.body; // username dari client, password sudah hash SHA256
 
-    const user = await User.findOne({
-      where: {
-        email
-      }
-    });
-
+    const user = await User.findOne({ where: { username } });
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
+      return res.status(401).json({ message: "User tidak ditemukan" });
     }
 
-    const isPasswordMatch = await user.comparePassword(password);
-
-    if (!isPasswordMatch) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid password'
-      });
+    if (user.password !== password) {
+      return res.status(401).json({ message: "Password salah" });
     }
 
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
-      expiresIn: '30d'
-    });
+    // buat token JWT misal (dummy contoh)
+    const token = "dummy-jwt-token";
 
-    res.status(200).json({
-      success: true,
-      data: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        fullName: user.fullName,
-        role: user.role,
-        token
-      }
+    return res.json({
+      message: "Login berhasil",
+      data: { token },
     });
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error in user login'
-    });
+    console.error("Login error:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 
